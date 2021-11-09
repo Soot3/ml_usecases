@@ -1,0 +1,3 @@
+The Manufacturing Industry can benefit from a number of Artificial Intelligence and Machine Learning solutions. Here we look at the aspect of Predictive Maintenance with a condition monitoring model built to holistically analyze an industrial machine's functioning, looking out for anomalies and predicting machine failures before product quality is affected and labour is lost.
+
+A walkthrough of the project can be found [here](https://drive.google.com/file/d/12AOMi1XOn1CFiUX6w_1ka-AGicB23PbS/view?usp=sharing).

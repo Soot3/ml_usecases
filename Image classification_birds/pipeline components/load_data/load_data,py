@@ -1,0 +1,11 @@
+def load_data():
+    #importing libraries
+    import os
+    import gdown
+    import zipfile
+    gdown.download('https://drive.google.com/uc?id=1-PZcakvsFsIvjwi-ajlNnVQWHLwEAW11','birds.zip',quiet=False)
+    with zipfile.ZipFile('birds.zip', 'r') as zip_ref:
+        zip_ref.extractall('img_folder')
+
+if __name__ == '__main__':
+    load_data()

@@ -1,0 +1,73 @@
+apiVersion: kubeflow.org/v1alpha3
+kind: Experiment
+metadata:
+  name: heart
+  namespace: sooter
+spec:
+  parallelTrialCount: 3
+  maxTrialCount: 12
+  maxFailedTrialCount: 3
+  objective:
+    type: maximize
+    goal: 0.99
+    objectiveMetricName: accuracy
+  algorithm:
+    algorithmName: bayesianoptimization
+  metricsCollectorSpec:
+    kind: StdOut
+  parameters:
+    - name: max_iter
+      parameterType: int
+      feasibleSpace:
+        min: "100"
+        max: "500"
+    - name: penalty
+      parameterType: categorical
+      feasibleSpace:
+        list: 
+            - "l1"
+            - "l2"
+            - "elasticnet"
+            - "none"
+    - name: solver
+      parameterType: categorical
+      feasibleSpace:
+        list:
+            - "liblinear"
+            - "newton-cg"
+            - "lbfgs"
+            - "sag"
+            - "saga"
+  trialTemplate:
+    primaryContainerName: training-container
+    trialParameters:
+      - name: maxiter
+        description: The number of iterations for solvers to converge
+        reference: max_iter
+      - name: penalty
+        description: The norm used in penalization
+        reference: penalty
+      - name: solver
+        description: Algorithm for optimization
+        reference: solver
+    trialSpec:
+      apiVersion: batch/v1
+      kind: Job
+      spec:
+        template:
+          metadata:
+            annotations:
+              sidecar.istio.io/inject: "false"
+          spec:
+            containers:
+              - name: training-container
+                image: "docker.io/mavencodevv/lrjobheart:v.0.1"
+                command:
+                  - python3
+                  - -u
+                  - /lrjobheart.py
+                args:
+                  - "--max_iter=${trialParameters.max_iter}"
+                  - "--penalty=${trialParameters.penalty}"
+                  - "--solver=${trialParameters.solver}"
+            restartPolicy: Never

@@ -1,0 +1,66 @@
+apiVersion: kubeflow.org/v1alpha3
+kind: Experiment
+metadata:
+  name: heart
+  namespace: ekemini
+spec:
+  parallelTrialCount: 3
+  maxTrialCount: 12
+  maxFailedTrialCount: 3
+  objective:
+    type: maximize
+    goal: 0.99
+    objectiveMetricName: accuracy
+  algorithm:
+    algorithmName: bayesianoptimization
+  metricsCollectorSpec:
+    kind: StdOut
+  parameters:
+    - name: n_estimators
+      parameterType: int
+      feasibleSpace:
+        min: "100"
+        max: "200"
+    - name: min_samples_leaf
+      parameterType: int
+      feasibleSpace:
+        min: "2"
+        max: "5"
+    - name: min_samples_split
+      parameterType: int
+      feasibleSpace:
+        min: "1"
+        max: "2"
+  trialTemplate:
+    primaryContainerName: training-container
+    trialParameters:
+      - name: nEstimators
+        description: The number of trees in the forest
+        reference: n_estimators
+      - name: minsamplesleaf
+        description: The minimum number of samples required to be at a leaf node
+        reference: min_samples_leaf
+      - name: minsamplessplit
+        description: The minimum number of samples required to split an internal node
+        reference: min_samples_split
+    trialSpec:
+      apiVersion: batch/v1
+      kind: Job
+      spec:
+        template:
+          metadata:
+            annotations:
+              sidecar.istio.io/inject: "false"
+          spec:
+            containers:
+              - name: training-container
+                image: "docker.io/mavencodevv/rfjobheart:v.0.1"
+                command:
+                  - python3
+                  - -u
+                  - /rfjobheart.py
+                args:
+                  - "--n_estimators=${trialParameters.nEstimators}"
+                  - "--min_samples_leaf=${trialParameters.min_samples_leaf}"
+                  - "--min_samples_split=${trialParameters.min_samples_split}"
+            restartPolicy: Never

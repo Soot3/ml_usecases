@@ -1,0 +1,4 @@
+FROM python:3.8
+RUN pip install catboost pandas scikit-learn
+COPY catjobheart.py /
+ENTRYPOINT ["python", "/catjobheart.py", "--iterations", "500", "--depth", "6", "--l2_leaf_reg", "3.0"]

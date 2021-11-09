@@ -1,0 +1,70 @@
+apiVersion: kubeflow.org/v1alpha3
+kind: Experiment
+metadata:
+  name: heart
+  namespace: ekemini
+spec:
+  parallelTrialCount: 3
+  maxTrialCount: 12
+  maxFailedTrialCount: 3
+  objective:
+    type: maximize
+    goal: 0.99
+    objectiveMetricName: accuracy
+  algorithm:
+    algorithmName: bayesianoptimization
+  metricsCollectorSpec:
+    kind: StdOut
+  parameters:
+    - name: C
+      parameterType: float
+      feasibleSpace:
+        min: "1.0"
+        max: "5.0"
+    - name: kernel
+      parameterType: categorical
+      feasibleSpace:
+        list:
+            - "rbf"
+            - "linear"
+            - "poly"
+            - "sigmoid"
+            - "precomputed"
+    - name: max_iter
+      parameterType: int
+      feasibleSpace:
+        min: "1"
+        max: "10"
+  trialTemplate:
+    primaryContainerName: training-container
+    trialParameters:
+      - name: C
+        description: Regularization Parameter
+        reference: C
+      - name: kernel
+        description: Specifies the kernel type to be used in the algorithm
+        reference: kernel
+      - name: maxiter
+        description: Hard limit on iterations within solver, or -1 for no limit
+        reference: max_iter
+    trialSpec:
+      apiVersion: batch/v1
+      kind: Job
+      spec:
+        template:
+          metadata:
+            annotations:
+              sidecar.istio.io/inject: "false"
+          spec:
+            containers:
+              - name: training-container
+                image: "docker.io/mavencodevv/svcjobheart:v.0.1"
+                command:
+                  - python3
+                  - -u
+                  - /svcjobheart.py
+                args:
+                  - "--C=${trialParameters.C}"
+                  - "--kernel=${trialParameters.kernel}"
+                  - "--max_iter=${trialParameters.max_iter}"
+            restartPolicy: Never

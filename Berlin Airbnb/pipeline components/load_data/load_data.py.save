@@ -1,0 +1,10 @@
+d_data():
+    #importing libraries
+    #importing the joblib files
+    import os
+    !wget  --no-check-certificate -r 'https://docs.google.com/uc?export=download&id=1-PZcakvsFsIvjwi-ajlNnVQWHLwEAW11' -O 'birds.zip'
+    !unzip birds
+    print(os.listdir())
+    print(os.getcwd())
+if __name__ == '__main__':
+    load_data()

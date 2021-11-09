@@ -1,0 +1,70 @@
+apiVersion: kubeflow.org/v1alpha3
+kind: Experiment
+metadata:
+  name: heart
+  namespace: ekemini
+spec:
+  parallelTrialCount: 3
+  maxTrialCount: 12
+  maxFailedTrialCount: 3
+  objective:
+    type: maximize
+    goal: 0.99
+    objectiveMetricName: accuracy
+  algorithm:
+    algorithmName: bayesianoptimization
+  metricsCollectorSpec:
+    kind: StdOut
+  parameters:
+    - name: n_neighbors
+      parameterType: int
+      feasibleSpace:
+        min: "5"
+        max: "10"
+    - name: weights
+      parameterType: categorical
+      feasibleSpace:
+        list:
+          - "uniform"
+          - "distance"
+    - name: algorithm
+      parameterType: categorical
+      feasibleSpace:
+        list:
+            - "auto"
+            - "ball_tree"
+            - "kd_tree"
+            - "brute"
+  trialTemplate:
+    primaryContainerName: training-container
+    trialParameters:
+      - name: nneighbors
+        description: Number of neighbors to use by default for kneighbors queries
+        reference: n_neighbors
+      - name: weights
+        description: weight function used in prediction
+        reference: weights
+      - name: algorithm
+        description: Algorithm used to compute the nearest neighbors
+        reference: algorithm
+    trialSpec:
+      apiVersion: batch/v1
+      kind: Job
+      spec:
+        template:
+          metadata:
+            annotations:
+              sidecar.istio.io/inject: "false"
+          spec:
+            containers:
+              - name: training-container
+                image: "docker.io/mavencodevv/knnjobheart:v.0.1"
+                command:
+                  - python3
+                  - -u
+                  - /knnjobheart.py
+                args:
+                  - "--n_neighbors=${trialParameters.n_neighbors}"
+                  - "--weights=${trialParameters.weights}"
+                  - "--algorithm=${trialParameters.algorithm}"
+            restartPolicy: Never

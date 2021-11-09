@@ -1,0 +1,4 @@
+FROM python:3.8
+RUN pip install pandas scikit-learn
+COPY knnjobheart.py /
+ENTRYPOINT ["python", "/knnjobheart.py", "--n_neighbors", "5", "--weights", "uniform", "--algorithm", "auto"]

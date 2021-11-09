@@ -1,0 +1,66 @@
+apiVersion: kubeflow.org/v1alpha3
+kind: Experiment
+metadata:
+  name: heart
+  namespace: ekemini
+spec:
+  parallelTrialCount: 3
+  maxTrialCount: 12
+  maxFailedTrialCount: 3
+  objective:
+    type: maximize
+    goal: 0.99
+    objectiveMetricName: accuracy
+  algorithm:
+    algorithmName: bayesianoptimization
+  metricsCollectorSpec:
+    kind: StdOut
+  parameters:
+    - name: iterations
+      parameterType: int
+      feasibleSpace:
+        min: "100"
+        max: "500"
+    - name: depth
+      parameterType: int
+      feasibleSpace:
+        min: "6"
+        max: "10"
+    - name: l2_leaf_reg
+      parameterType: float
+      feasibleSpace:
+        min: "3.0"
+        max: "6.0"
+  trialTemplate:
+    primaryContainerName: training-container
+    trialParameters:
+      - name: iterations
+        description: Max count of trees
+        reference: iterations
+      - name: depth
+        description: Depth of a tree
+        reference: depth
+      - name: l2leafreg
+        description: Coefficient at the L2 regularization term of the cost function
+        reference: l2_leaf_reg
+    trialSpec:
+      apiVersion: batch/v1
+      kind: Job
+      spec:
+        template:
+          metadata:
+            annotations:
+              sidecar.istio.io/inject: "false"
+          spec:
+            containers:
+              - name: training-container
+                image: "docker.io/mavencodevv/catjobheart:v.0.1"
+                command:
+                  - python3
+                  - -u
+                  - /catjobheart.py
+                args:
+                  - "--iterations=${trialParameters.iterations}"
+                  - "--depth=${trialParameters.depth}"
+                  - "--l2_leaf_reg=${trialParameters.l2_leaf_reg}"
+            restartPolicy: Never

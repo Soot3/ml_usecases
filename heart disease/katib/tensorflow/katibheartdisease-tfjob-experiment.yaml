@@ -1,0 +1,68 @@
+apiVersion: "kubeflow.org/v1beta1"
+kind: Experiment
+metadata:
+  namespace: ekemini
+  name: heart
+spec:
+  parallelTrialCount: 3
+  maxTrialCount: 12
+  maxFailedTrialCount: 3
+  objective:
+    type: maximize
+    goal: 0.8
+    objectiveMetricName: accuracy
+  algorithm:
+    algorithmName: random
+  metricsCollectorSpec:
+    kind: StdOut
+  parameters:
+    - name: learning_rate
+      parameterType: double
+      feasibleSpace:
+        min: "0.01"
+        max: "0.1"
+    - name: batch_size
+      parameterType: int
+      feasibleSpace:
+        min: "50"
+        max: "100"
+    - name: optimizer
+      parameterType: categorical
+      feasibleSpace:
+        list:
+          - rmsprop
+          - adam
+  trialTemplate:
+    primaryContainerName: tensorflow
+    trialParameters:
+      - name: learningRate
+        description: Learning rate for the training model
+        reference: learning_rate
+      - name: batchSize
+        description: Batch Size
+        reference: batch_size
+      - name: optimizer
+        description: Training model optimizer (sdg, adam)
+        reference: optimizer
+    trialSpec:
+      apiVersion: "kubeflow.org/v1"
+      kind: TFJob
+      spec:
+        tfReplicaSpecs:
+          Worker:
+            replicas: 1
+            restartPolicy: OnFailure
+            template:
+              metadata:
+                annotations:
+                  sidecar.istio.io/inject: "false"
+              spec:
+                containers:
+                  - name: tensorflow
+                    image: mavencodevv/tfjob_heart:v.0.1
+                    command:
+                      - "python"
+                      - "/tfjobheart.py"
+                      - "--batch_size=${trialParameters.batchSize}"
+                      - "--learning_rate=${trialParameters.learningRate}"
+                      - "--optimizer=${trialParameters.optimizer}"

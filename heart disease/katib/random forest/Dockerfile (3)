@@ -1,0 +1,4 @@
+FROM python:3.8
+RUN pip install pandas scikit-learn
+COPY rfjobheart.py /
+ENTRYPOINT ["python", "/rfjobheart.py", "--n_estimators", "100", "--min_samples_leaf", "2", "--min_samples_split", "2"]
